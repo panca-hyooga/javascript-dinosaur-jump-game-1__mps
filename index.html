@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinosaur Game</title>
+    <style>
+        #arena{
+            outline: dashed 3px #999;
+            background-image: url(background.png);
+            background-repeat: repeat-x;
+        }
+        @keyframes paralax {
+            0% { background-position-x: 0px; }
+            100% { background-position-x: -600px;}
+        }
+    </style>
+</head>
+<body>
+    <p style="background:#ddd;padding: 15px;display: inline-block;outline: solid 3px #333;">
+        HOW TO PLAY : Click on "start game" button, and then press spacebar keyboard button to jump and avoid the cactus. Try to survive as long as possible.</br>
+        HOW TO RETRY : Refresh the page.
+    </p>
+    </br>
+    <div id="arena" style="width: 600px; height: 200px; background-color: #e6e6e6; position: relative;overflow: hidden;"></div>
+    </br>
+    <b>SCORE:</b>
+    <div id="scoreboard">0</div>
+    </br>
+    <button id="start-button">START GAME!</button>
+    
+    <script>
+        const cactus_speed = 3; //measure units in percent
+        const free_fall_speed = 5.5; //measure units in pixel
+        const max_jump_hight = 80; //measure units in pixel
+        const force_power = 11; //measure units in pixel
+
+        //1.Create character
+        const dino = document.createElement("img");
+        dino.src = "dino1.png";
+        dino.style.width = "50px";
+        dino.style.height = "50px";
+        dino.style.position = "absolute";
+        dino.style.bottom = "0%";
+        dino.style.left = "0px";
+        document.getElementById("arena").appendChild(dino);
+
+        //2.Create cactus obstacle
+        const cactus = document.createElement("img");
+        cactus.src = "cactus.png";
+        cactus.style.width = "35px";
+        cactus.style.height = "50px";
+        cactus.style.position = "absolute";
+        cactus.style.bottom = "0px";
+        cactus.style.right = "0%";
+        document.getElementById("arena").appendChild(cactus);
+
+        let is_collide = false;
+
+        //3.Adding animation to the dino character
+        function addDinoAnimation(){
+            let curr_frame = 0;
+            const animate_dino = setInterval(function(){
+                curr_frame <= 150 ? curr_frame += 10 : curr_frame = 0;
+
+                if(curr_frame > 70){
+                    dino.src = "dino1.png";
+                }else{
+                    dino.src = "dino2.png";
+                };
+
+                //add the law of gravity for the dino-san
+                let groundpos = parseInt(dino.style.bottom);
+                groundpos > 0 ? groundpos -= free_fall_speed : groundpos = 0;
+                dino.style.bottom = groundpos+"px";
+
+                if(is_collide===true){
+                    clearInterval(animate_dino);
+                };
+
+            }, 10);
+        };
+
+        //4.Add control to the dino
+        //whenever you press spacebar keyboard button, he should be able to jump... yes?
+        function addJumpControl(){
+            document.addEventListener("keydown", function(event){
+                if(parseInt(dino.style.bottom) !== 0){
+                    return;
+                };
+
+                if(event.key === " "){
+                    is_still_jumping = true;
+
+                    let curr_elevation = 0;
+                    
+                    const elevate_dino = setInterval(function(){
+                        curr_elevation += force_power;
+                        dino.style.bottom = curr_elevation+"px";
+
+                        if(curr_elevation > max_jump_hight){
+                            clearInterval(elevate_dino);
+                        };
+
+                        if(is_collide === true){
+                            clearInterval(elevate_dino);
+                        };
+
+                    }, 10)
+                };
+            });
+        };
+
+        //5.Move cactus from right to the left
+        function addCactusObstacle(){
+            let curr_position = 0;
+            const scoreboard = document.getElementById("scoreboard");
+
+            const move_cactus_and_check = setInterval(function(){
+                scoreboard.innerHTML = (parseFloat(scoreboard.innerHTML) + 0.23).toFixed(2);
+
+                curr_position < 101 ? curr_position += cactus_speed : curr_position=0;
+                cactus.style.right = curr_position+"%";
+
+                if(cactus.offsetLeft <= 48){
+                    //check if cactus are colided with the dino
+                    if(dino.offsetWidth - 15 > cactus.offsetLeft + 5 &&
+                        dino.offsetLeft + 5 < (cactus.offsetLeft + cactus.offsetWidth) - 15 &&
+                        (dino.offsetTop + dino.offsetHeight) - 15 > cactus.offsetTop + 5
+                    ){
+                        alert('you ded');
+                        clearInterval(move_cactus_and_check);
+                        is_collide = true;
+                        document.getElementById("arena").style.animation = "none";
+                    };
+                };
+
+            }, 10);
+        };
+
+        //================================================================//
+        //run all function when the player are pressing the start button
+        document.getElementById("start-button").addEventListener("click", function(){
+            this.parentNode.removeChild(this);
+
+            addDinoAnimation();
+            addJumpControl();
+            addCactusObstacle();
+            document.getElementById("arena").style.animation = "paralax 4s linear infinite";
+        });
+    </script>
+</body>
+</html>
